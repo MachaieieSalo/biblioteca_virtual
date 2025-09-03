@@ -137,7 +137,7 @@ if not st.session_state.user:
     # Centralizar logo usando colunas
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.image("C:/Storage/Backup/amasoRis.yB/Codigos/PYTHON/biblioteca_virtual/static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
+        st.image("static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
     st.title("📚 Biblioteca Virtual | Instituto Politécnico Sumayya")
     st.text("Seja bem-vindo ao nosso Sistema Bibliotecario! Por favor, faça login para continuar.")
     
@@ -210,7 +210,7 @@ if new_photo:
 # Centralizar logo usando colunas
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image("C:/Storage/Backup/amasoRis.yB/Codigos/PYTHON/biblioteca_virtual/static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
+    st.image("static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
 st.title("📚 Biblioteca Virtual | Instituto Politécnico Sumayya")
 
 # Pesquisa
