@@ -1,0 +1,287 @@
+import streamlit as st
+from supabase import create_client, Client
+import unicodedata
+import re
+import os
+
+# ==========================
+# CONFIGURAÇÕES DO SUPABASE
+# ==========================
+SUPABASE_URL = "https://fnabfzhmyrzfeqqyzeip.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuYWJmemhteXJ6ZmVxcXl6ZWlwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Njg0MTg5OCwiZXhwIjoyMDcyNDE3ODk4fQ.0lX8Zm22DXtURKNTjKwGWvoG2N6_kuMklqvQVQsVRMk"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+ADMIN_EMAIL = "salomaopaulinomachaieie@gmail.com"
+
+CATEGORIES = ["Medicina Geral", "Enfermagem Materno Infantil", "Enfermagem Geral", "Nutrição"]
+
+# ==========================
+# FUNÇÕES AUXILIARES
+# ==========================
+
+def sanitize_filename(filename: str) -> str:
+    nfkd = unicodedata.normalize("NFKD", filename)
+    filename = "".join([c for c in nfkd if not unicodedata.combining(c)])
+    filename = filename.replace(" ", "_")
+    filename = re.sub(r"[^a-zA-Z0-9_.-]", "", filename)
+    return filename
+
+def guess_mime(path: str, fallback: str = "application/octet-stream") -> str:
+    ext = os.path.splitext(path.lower())[1]
+    return {
+        ".pdf": "application/pdf",
+        ".epub": "application/epub+zip",
+        ".txt": "text/plain",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+    }.get(ext, fallback)
+
+def login_user(email, password):
+    try:
+        user = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        return user
+    except Exception:
+        return None
+
+def logout_user():
+    st.session_state.user = None
+    st.session_state.offset = 0
+    st.rerun()
+
+def get_books(search_query="", category=None, offset=0, limit=8):
+    q = supabase.table("livros").select("*").order("titulo")
+    if search_query:
+        q = q.ilike("titulo", f"%{search_query}%")
+    if category:
+        q = q.eq("categoria", category)
+    resp = q.range(offset, offset + limit - 1).execute()
+    data = getattr(resp, "data", None)
+    if data is None and isinstance(resp, dict):
+        data = resp.get("data", [])
+    return data or []
+
+def record_history(user_email, livro_id):
+    try:
+        supabase.table("usuarios_livros_historico").insert({
+            "usuario_email": user_email,
+            "livro_id": livro_id
+        }).execute()
+    except Exception as e:
+        st.error(f"Erro ao gravar histórico: {e}")
+
+def upload_book(titulo, autor, categoria, file, capa=None):
+    try:
+        # PDF
+        safe_pdf = sanitize_filename(file.name)
+        pdf_path = f"pdfs/{safe_pdf}"
+        pdf_bytes = file.read()
+        pdf_options = {"content-type": guess_mime(pdf_path, "application/pdf"), "upsert": "true"}
+        supabase.storage.from_("biblioteca").upload(pdf_path, pdf_bytes, pdf_options)
+        pdf_public = supabase.storage.from_("biblioteca").get_public_url(pdf_path)
+        file_url = pdf_public.get("publicURL") if isinstance(pdf_public, dict) else str(pdf_public)
+
+        # Capa opcional
+        capa_url = None
+        if capa:
+            safe_capa = sanitize_filename(capa.name)
+            capa_path = f"capas/{safe_capa}"
+            capa_bytes = capa.read()
+            capa_options = {"content-type": guess_mime(capa_path, "image/jpeg"), "upsert": "true"}
+            supabase.storage.from_("biblioteca").upload(capa_path, capa_bytes, capa_options)
+            capa_public = supabase.storage.from_("biblioteca").get_public_url(capa_path)
+            capa_url = capa_public.get("publicURL") if isinstance(capa_public, dict) else str(capa_public)
+
+        # Inserir na DB
+        payload = {
+            "titulo": titulo,
+            "autor": autor or "Autor desconhecido",
+            "categoria": categoria,
+            "ficheiro_url": file_url,
+            "capa_url": capa_url
+        }
+        supabase.table("livros").insert(payload).execute()
+        return True
+    except Exception as e:
+        st.error(f"Erro no upload: {e}")
+        return False
+
+# ==========================
+# CONFIGURAÇÃO DA PÁGINA
+# ==========================
+
+st.set_page_config(page_title="Biblioteca Virtual", layout="wide")
+
+st.markdown("""
+<style>
+    body { background-color: #f5f7fa; }
+    .stButton button { background-color: #4a90e2; color: white; border-radius: 8px; padding: 0.5em 1.5em; }
+    .book-card { background: white; border-radius: 12px; padding: 15px; margin: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s; text-align: center; }
+    .book-card:hover { transform: scale(1.03); box-shadow: 0 6px 14px rgba(0,0,0,0.15); }
+    .book-cover { width: 100%; height: 250px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; }
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================
+# LOGIN
+# ==========================
+
+if "user" not in st.session_state:
+    st.session_state.user = None
+if "offset" not in st.session_state:
+    st.session_state.offset = 0
+
+if not st.session_state.user:
+    # Centralizar logo usando colunas
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.image("C:/Storage/Backup/amasoRis.yB/Codigos/PYTHON/biblioteca_virtual/static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
+    st.title("📚 Biblioteca Virtual | Instituto Politécnico Sumayya")
+    st.text("Seja bem-vindo ao nosso Sistema Bibliotecario! Por favor, faça login para continuar.")
+    
+
+    email = st.text_input("Email")
+    password = st.text_input("Palavra-passe", type="password")
+    if st.button("Entrar"):
+        user = login_user(email, password)
+        if user:
+            st.session_state.user = {"id": user.user.id, "email": user.user.email}
+            st.success(f"Bem-vindo, {email}")
+            st.rerun()
+        else:
+            st.error("Credenciais inválidas")
+    
+    # Rodapé
+    st.markdown(
+        """
+        <div style="text-align: center; margin-top: 40px; color: #888; font-size: 0.9em;">
+            © 2025 Biblioteca Virtual | Fortaleza Digital, E.I | Desenvolvedor: Salomão Machaieie. Todos os direitos reservados.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    st.stop()
+
+    
+
+
+user_email = st.session_state.user["email"]
+
+# ==========================
+# BARRA LATERAL
+# ==========================
+st.sidebar.markdown("## 👤 Perfil do Usuário")
+
+# Inicializa foto do usuário se não existir
+if "user_photo" not in st.session_state:
+    st.session_state.user_photo = "https://cdn-icons-png.flaticon.com/512/1048/1048953.png"
+
+
+# Mostrar foto atual
+st.sidebar.image(st.session_state.user_photo, width=80)
+
+# Informações do usuário
+st.sidebar.markdown(f"### 👤 Utilizador: {user_email}")
+if user_email == ADMIN_EMAIL:
+    st.sidebar.success("Administrador")
+else:
+    st.sidebar.info("Usuário normal")
+
+# Botão de logout
+if st.sidebar.button("🚪 Logout"):
+    logout_user()
+
+# Filtro de categoria
+CATEGORIES = ["Medicina geral", "Enfermagem Materno infantil", "Enfermagem geral", "Nutrição"]
+category_filter = st.sidebar.selectbox("Filtrar por Categoria", ["Todas"] + CATEGORIES)
+
+# Permitir upload de nova foto
+new_photo = st.sidebar.file_uploader("Alterar foto de perfil", type=["png", "jpg", "jpeg"])
+if new_photo:
+    # Salva no session_state
+    st.session_state.user_photo = new_photo
+    st.sidebar.success("Foto atualizada!")
+    st.stop()  # Interrompe execução para recarregar a sidebar com a nova imagem
+
+# ==========================
+
+# Centralizar logo usando colunas
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("C:/Storage/Backup/amasoRis.yB/Codigos/PYTHON/biblioteca_virtual/static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
+st.title("📚 Biblioteca Virtual | Instituto Politécnico Sumayya")
+
+# Pesquisa
+search = st.text_input("🔍 Procurar livro por título")
+
+# ==========================
+# LISTAGEM DE LIVROS (lazy load)
+# ==========================
+BOOKS_PER_BLOCK = 8
+livros = get_books(search, None if category_filter=="Todas" else category_filter, st.session_state.offset, BOOKS_PER_BLOCK)
+
+if livros:
+    cols_per_row = 4
+    for i in range(0, len(livros), cols_per_row):
+        row = st.columns(cols_per_row)
+        for col, livro in zip(row, livros[i:i+cols_per_row]):
+            with col:
+                st.markdown("<div class='book-card'>", unsafe_allow_html=True)
+                capa_url = livro.get("capa_url") or "https://cdn-icons-png.flaticon.com/512/29/29302.png"
+                st.image(capa_url, use_container_width=True, caption=livro["titulo"])
+                st.write(f"✍️ {livro.get('autor', 'Autor desconhecido')}")
+                st.markdown(f"[📥 Baixar]({livro['ficheiro_url']})")
+                # Grava histórico
+                if user_email != ADMIN_EMAIL:
+                    record_history(user_email, livro["id"])
+                st.markdown("</div>", unsafe_allow_html=True)
+
+    # Botão para carregar mais
+    if len(livros) == BOOKS_PER_BLOCK:
+        if st.button("Carregar mais livros"):
+            st.session_state.offset += BOOKS_PER_BLOCK
+            st.experimental_rerun()
+else:
+    st.info("Nenhum livro encontrado.")
+
+st.markdown(
+        """
+        <div style="text-align: center; margin-top: 40px; color: #888; font-size: 0.9em;">
+            © 2025 Biblioteca Virtual | Fortaleza Digital, E.I | Desenvolvedor: Salomão Machaieie. Todos os direitos reservados.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+
+# ==========================
+# PAINEL ADMIN
+# ==========================
+if user_email == ADMIN_EMAIL:
+    st.subheader("⚙️ Painel de Administração")
+    with st.form("upload_form"):
+        titulo = st.text_input("Título do Livro")
+        autor = st.text_input("Autor")
+        categoria = st.selectbox("Categoria", CATEGORIES)
+        file = st.file_uploader("Upload do PDF", type=["pdf"])
+        capa = st.file_uploader("Upload da Capa (opcional)", type=["png","jpg","jpeg"])
+        submitted = st.form_submit_button("Enviar")
+        if submitted:
+            if titulo and file:
+                if upload_book(titulo, autor, categoria, file, capa):
+                    st.success("📚 Livro adicionado com sucesso!")
+                    st.session_state.offset = 0
+                    st.rerun()
+            else:
+                st.error("Preencha pelo menos o título e o PDF")
+st.markdown(
+        """
+        <div style="text-align: center; margin-top: 40px; color: #888; font-size: 0.9em;">
+            © 2025 Biblioteca Virtual | Fortaleza Digital, E.I | Desenvolvedor: Salomão Machaieie. Todos os direitos reservados.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )

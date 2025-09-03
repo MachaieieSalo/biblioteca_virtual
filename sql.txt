@@ -1,0 +1,94 @@
+-- ======================================
+-- 1. Criar tabela livros
+-- ======================================
+create table livros (
+    id bigint generated always as identity primary key,
+    user_id uuid references auth.users(id) on delete cascade,
+    titulo text not null,
+    ficheiro_url text,
+    created_at timestamp default now()
+);
+
+-- Ativar Row-Level Security
+alter table livros enable row level security;
+
+-- ================================
+-- RLS Policies para livros
+-- ================================
+
+-- 1. Cada utilizador apenas vê os seus próprios livros
+create policy "Usuarios podem ver os seus livros"
+on livros for select
+using (auth.uid() = user_id);
+
+-- 2. Cada utilizador pode inserir os seus livros
+create policy "Usuarios podem adicionar livros"
+on livros for insert
+with check (auth.uid() = user_id);
+
+-- 3. Cada utilizador pode remover os seus livros
+create policy "Usuarios podem remover os seus livros"
+on livros for delete
+using (auth.uid() = user_id);
+
+-- ======================================
+-- 2. View para admin ver todos os livros com emails
+-- ======================================
+create view livros_com_usuarios as
+select 
+    l.id,
+    l.titulo,
+    l.ficheiro_url,
+    l.user_id,
+    u.email as usuario_email,
+    l.created_at
+from livros l
+join auth.users u on u.id = l.user_id;
+
+-- ======================================
+-- 3. Criar bucket de Storage
+-- ======================================
+-- Criar bucket 'biblioteca' (não público)
+insert into storage.buckets (id, name, public)
+values ('biblioteca', 'biblioteca', false);
+
+-- ======================================
+-- 4. Políticas RLS para Storage (somente admin pode upload/update/delete)
+-- ======================================
+
+-- 4.1 Qualquer utilizador autenticado pode ler ficheiros
+create policy "Usuarios autenticados podem ler ficheiros"
+on storage.objects for select
+using (
+  bucket_id = 'biblioteca'
+);
+
+-- 4.2 Apenas admin pode inserir (upload)
+create policy "Apenas admin pode inserir"
+on storage.objects for insert
+with check (
+  bucket_id = 'biblioteca'
+  and auth.uid() in (
+    select id from auth.users where email = 'salomaopaulinomachaieie@gmail.com'
+  )
+);
+
+-- 4.3 Apenas admin pode atualizar ficheiros
+create policy "Apenas admin pode atualizar"
+on storage.objects for update
+using (
+  bucket_id = 'biblioteca'
+  and auth.uid() in (
+    select id from auth.users where email = 'salomaopaulinomachaieie@gmail.com'
+  )
+);
+
+-- 4.4 Apenas admin pode apagar ficheiros
+create policy "Apenas admin pode apagar"
+on storage.objects for delete
+using (
+  bucket_id = 'biblioteca'
+  and auth.uid() in (
+    select id from auth.users where email = 'salomaopaulinomachaieie@gmail.com'
+  )
+);
