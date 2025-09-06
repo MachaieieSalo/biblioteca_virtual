@@ -1,5 +1,6 @@
 import streamlit as st
 from supabase import create_client, Client
+from docx import Document
 import unicodedata
 import re
 import os
@@ -331,4 +332,5 @@ if user_email == ADMIN_EMAIL:
                 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
