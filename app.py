@@ -72,9 +72,14 @@ def record_history(user_email, livro_id):
     except Exception as e:
         st.error(f"Erro ao gravar histórico: {e}")
 
-def upload_book(titulo, autor, categoria, file, capa=None):
+from PIL import Image
+from io import BytesIO
+
+def upload_book(titulo, autor, categoria, file, capa=None, capa_width=300, capa_height=400):
     try:
-        # PDF
+        # ---------------------
+        # Upload do PDF
+        # ---------------------
         safe_pdf = sanitize_filename(file.name)
         pdf_path = f"pdfs/{safe_pdf}"
         pdf_bytes = file.read()
@@ -83,18 +88,35 @@ def upload_book(titulo, autor, categoria, file, capa=None):
         pdf_public = supabase.storage.from_("biblioteca").get_public_url(pdf_path)
         file_url = pdf_public.get("publicURL") if isinstance(pdf_public, dict) else str(pdf_public)
 
-        # Capa opcional
+        # ---------------------
+        # Upload da capa (opcional)
+        # ---------------------
         capa_url = None
         if capa:
             safe_capa = sanitize_filename(capa.name)
             capa_path = f"capas/{safe_capa}"
-            capa_bytes = capa.read()
-            capa_options = {"content-type": guess_mime(capa_path, "image/jpeg"), "upsert": "true"}
+
+            # Abrir imagem e redimensionar
+            image = Image.open(capa)
+            image = image.resize((capa_width, capa_height), Image.ANTIALIAS)
+
+            # Salvar imagem redimensionada em bytes
+            buffer = BytesIO()
+            image.save(buffer, format="JPEG")
+            buffer.seek(0)
+            capa_bytes = buffer.read()
+
+            # Upload para o Supabase
+            capa_options = {"content-type": "image/jpeg", "upsert": "true"}
             supabase.storage.from_("biblioteca").upload(capa_path, capa_bytes, capa_options)
+
+            # Obter URL público
             capa_public = supabase.storage.from_("biblioteca").get_public_url(capa_path)
             capa_url = capa_public.get("publicURL") if isinstance(capa_public, dict) else str(capa_public)
 
-        # Inserir na DB
+        # ---------------------
+        # Inserir registro na DB
+        # ---------------------
         payload = {
             "titulo": titulo,
             "autor": autor or "Autor desconhecido",
@@ -104,6 +126,7 @@ def upload_book(titulo, autor, categoria, file, capa=None):
         }
         supabase.table("livros").insert(payload).execute()
         return True
+
     except Exception as e:
         st.error(f"Erro no upload: {e}")
         return False
@@ -339,6 +362,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
