@@ -262,6 +262,8 @@ st.markdown(
 # ==========================
 if user_email == ADMIN_EMAIL:
     st.subheader("⚙️ Painel de Administração")
+
+    # ---- Formulário de upload de livros ----
     with st.form("upload_form"):
         titulo = st.text_input("Título do Livro")
         autor = st.text_input("Autor")
@@ -277,11 +279,56 @@ if user_email == ADMIN_EMAIL:
                     st.rerun()
             else:
                 st.error("Preencha pelo menos o título e o PDF")
-st.markdown(
-        """
-        <div style="text-align: center; margin-top: 40px; color: #888; font-size: 0.9em;">
-            © 2025 Biblioteca Virtual | Fortaleza Digital, E.I | Desenvolvedor: Salomão Machaieie. Todos os direitos reservados.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+
+    st.markdown("---")
+    
+    # ---- Exportação de tabela para DOCX ----
+    st.subheader("📄 Exportar tabela para DOCX")
+    
+    # Seleção da tabela (pode adicionar mais tabelas futuramente)
+    tabela_selecionada = st.selectbox("Selecionar tabela", ["estudantes_users"])
+    
+    if st.button("Exportar para DOCX"):
+        from docx import Document
+        import os
+        
+        try:
+            # Obter dados da tabela selecionada
+            response = supabase.table(tabela_selecionada).select("*").execute()
+            dados = response.data
+            if not dados:
+                st.warning("Nenhum dado encontrado na tabela.")
+            else:
+                # Criar pasta de saída
+                output_path = "D:\\Users\\MACHAIEIE\\Desktop\\cli\\biblioteca_virtual\\credetials"
+                os.makedirs(output_path, exist_ok=True)
+                
+                # Criar documento
+                doc = Document()
+                doc.add_heading(f"Tabela: {tabela_selecionada}", 0)
+                
+                # Criar tabela no DOCX
+                colunas = list(dados[0].keys())
+                tabela = doc.add_table(rows=1, cols=len(colunas))
+                tabela.style = 'Table Grid'
+                
+                # Cabeçalho
+                hdr_cells = tabela.rows[0].cells
+                for i, coluna in enumerate(colunas):
+                    hdr_cells[i].text = coluna
+                
+                # Dados
+                for item in dados:
+                    row_cells = tabela.add_row().cells
+                    for i, coluna in enumerate(colunas):
+                        row_cells[i].text = str(item[coluna])
+                
+                # Salvar documento
+                doc_file = os.path.join(output_path, f"{tabela_selecionada}.docx")
+                doc.save(doc_file)
+                
+                st.success(f"Documento gerado com sucesso: {doc_file}")
+                
+        except Exception as e:
+            st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
