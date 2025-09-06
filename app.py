@@ -232,8 +232,8 @@ if livros:
                 st.markdown("<div class='book-card'>", unsafe_allow_html=True)
                 capa_url = livro.get("capa_url") or "https://cdn-icons-png.flaticon.com/512/29/29302.png"
                 st.image(capa_url, use_container_width=True, caption=livro["titulo"])
-                st.write(f"✍️ {livro.get('autor', 'Autor desconhecido')}")
-                st.markdown(f"[📥 Baixar]({livro['ficheiro_url']})")
+                st.write(f"{livro.get('autor', 'Autor desconhecido')}")
+                st.markdown(f"[Baixar livro]({livro['ficheiro_url']})")
                 # Grava histórico
                 if user_email != ADMIN_EMAIL:
                     record_history(user_email, livro["id"])
@@ -339,6 +339,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
