@@ -283,16 +283,17 @@ if user_email == ADMIN_EMAIL:
 
     st.markdown("---")
     
-    # ---- Exportação de tabela para DOCX ----
-    st.subheader("📄 Exportar Lista de credenciais")
+   # ---- Exportação de tabela para DOCX ----
+    st.subheader("📄 Exportar Credencias de acesso")
     
     # Seleção da tabela (pode adicionar mais tabelas futuramente)
     tabela_selecionada = st.selectbox("Selecionar tabela", ["estudantes_users"])
     
-    if st.button("Exportar para DOCX"):
+    if st.button("Gerar DOCX"):
         from docx import Document
-        import os
-        
+        from docx.shared import Inches, Pt
+        from io import BytesIO
+
         try:
             # Obter dados da tabela selecionada
             response = supabase.table(tabela_selecionada).select("*").execute()
@@ -300,38 +301,43 @@ if user_email == ADMIN_EMAIL:
             if not dados:
                 st.warning("Nenhum dado encontrado na tabela.")
             else:
-                # Criar pasta de saída
-                output_path = "D:\\Users\\MACHAIEIE\\Desktop\\cli\\biblioteca_virtual\\credetials"
-                os.makedirs(output_path, exist_ok=True)
-                
-                # Criar documento
+                # Criar documento na memória
                 doc = Document()
                 doc.add_heading(f"Tabela: {tabela_selecionada}", 0)
                 
                 # Criar tabela no DOCX
                 colunas = list(dados[0].keys())
                 tabela = doc.add_table(rows=1, cols=len(colunas))
-                tabela.style = 'Table Grid'
+                tabela.style = 'Light List Accent 1'  # estilo mais profissional
                 
                 # Cabeçalho
                 hdr_cells = tabela.rows[0].cells
                 for i, coluna in enumerate(colunas):
                     hdr_cells[i].text = coluna
+                    hdr_cells[i].paragraphs[0].runs[0].font.bold = True
+                    hdr_cells[i].paragraphs[0].runs[0].font.size = Pt(11)
                 
-                # Dados
+                # Preencher dados
                 for item in dados:
                     row_cells = tabela.add_row().cells
                     for i, coluna in enumerate(colunas):
                         row_cells[i].text = str(item[coluna])
+                        row_cells[i].paragraphs[0].runs[0].font.size = Pt(10)
                 
-                # Salvar documento
-                doc_file = os.path.join(output_path, f"{tabela_selecionada}.docx")
-                doc.save(doc_file)
+                # Salvar DOCX em memória
+                buffer = BytesIO()
+                doc.save(buffer)
+                buffer.seek(0)
                 
-                st.success(f"Documento gerado com sucesso: {doc_file}")
-                
+                # Botão de download
+                st.download_button(
+                    label="📥 Baixar DOCX",
+                    data=buffer,
+                    file_name=f"{tabela_selecionada}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
-
 
 
