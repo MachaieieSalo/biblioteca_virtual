@@ -284,7 +284,7 @@ if user_email == ADMIN_EMAIL:
     st.markdown("---")
     
     # ---- Exportação de tabela para DOCX ----
-    st.subheader("📄 Exportar tabela para DOCX")
+    st.subheader("📄 Exportar Lista de credenciais")
     
     # Seleção da tabela (pode adicionar mais tabelas futuramente)
     tabela_selecionada = st.selectbox("Selecionar tabela", ["estudantes_users"])
@@ -332,5 +332,6 @@ if user_email == ADMIN_EMAIL:
                 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
