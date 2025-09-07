@@ -134,7 +134,7 @@ def upload_book(titulo, autor, categoria, file, capa=None, largura=400, altura=6
 # ==========================
 
 st.set_page_config(
-    page_title="📚 Biblioteca Virtual",
+    page_title="Biblioteca Virtual do Instituto Politécnico Sumayya",
     page_icon="static/image/logo.png",  # Caminho para o ficheiro
     layout="wide"
 )
@@ -366,6 +366,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
