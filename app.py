@@ -4,6 +4,8 @@ from docx import Document
 import unicodedata
 import re
 import os
+from PIL import Image
+from io import BytesIO
 
 # ==========================
 # CONFIGURAÇÕES DO SUPABASE
@@ -72,8 +74,7 @@ def record_history(user_email, livro_id):
     except Exception as e:
         st.error(f"Erro ao gravar histórico: {e}")
 
-from PIL import Image
-from io import BytesIO
+
 
 def upload_book(titulo, autor, categoria, file, capa=None, capa_width=300, capa_height=400):
     try:
@@ -362,6 +363,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
