@@ -17,7 +17,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 ADMIN_EMAIL = "salomaopaulinomachaieie@gmail.com"
 
-CATEGORIES = ["Medicina Geral", "Enfermagem Materno Infantil", "Enfermagem Geral", "Nutrição"]
+CATEGORIES = ["Medicina Geral", "Saúde Materno Infantil", "Enfermagem Geral", "Nutrição"]
 
 # ==========================
 # FUNÇÕES AUXILIARES
@@ -220,7 +220,7 @@ if st.sidebar.button("🚪 Logout"):
     logout_user()
 
 # Filtro de categoria
-CATEGORIES = ["Medicina geral", "Enfermagem Materno infantil", "Enfermagem geral", "Nutrição"]
+CATEGORIES = ["Medicina geral", "Saúde Materno infantil", "Enfermagem geral", "Nutrição"]
 category_filter = st.sidebar.selectbox("Filtrar por Categoria", ["Todas"] + CATEGORIES)
 
 # Permitir upload de nova foto
@@ -366,6 +366,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
