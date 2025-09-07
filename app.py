@@ -76,11 +76,9 @@ def record_history(user_email, livro_id):
 
 
 
-def upload_book(titulo, autor, categoria, file, capa=None, capa_width=300, capa_height=400):
+def upload_book(titulo, autor, categoria, file, capa=None, largura=400, altura=600):
     try:
-        # ---------------------
-        # Upload do PDF
-        # ---------------------
+        # PDF
         safe_pdf = sanitize_filename(file.name)
         pdf_path = f"pdfs/{safe_pdf}"
         pdf_bytes = file.read()
@@ -89,35 +87,24 @@ def upload_book(titulo, autor, categoria, file, capa=None, capa_width=300, capa_
         pdf_public = supabase.storage.from_("biblioteca").get_public_url(pdf_path)
         file_url = pdf_public.get("publicURL") if isinstance(pdf_public, dict) else str(pdf_public)
 
-        # ---------------------
-        # Upload da capa (opcional)
-        # ---------------------
+        # Capa opcional
         capa_url = None
         if capa:
             safe_capa = sanitize_filename(capa.name)
             capa_path = f"capas/{safe_capa}"
 
-            # Abrir imagem e redimensionar
-            image = Image.open(capa)
-            image = image.resize((capa_width, capa_height), Image.ANTIALIAS)
+            img = Image.open(capa)
+            img = img.resize((largura, altura), Image.Resampling.LANCZOS)  # 👈 usa dimensões escolhidas
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format="JPEG")
+            capa_bytes = img_byte_arr.getvalue()
 
-            # Salvar imagem redimensionada em bytes
-            buffer = BytesIO()
-            image.save(buffer, format="JPEG")
-            buffer.seek(0)
-            capa_bytes = buffer.read()
-
-            # Upload para o Supabase
             capa_options = {"content-type": "image/jpeg", "upsert": "true"}
             supabase.storage.from_("biblioteca").upload(capa_path, capa_bytes, capa_options)
-
-            # Obter URL público
             capa_public = supabase.storage.from_("biblioteca").get_public_url(capa_path)
             capa_url = capa_public.get("publicURL") if isinstance(capa_public, dict) else str(capa_public)
 
-        # ---------------------
-        # Inserir registro na DB
-        # ---------------------
+        # Inserir na DB
         payload = {
             "titulo": titulo,
             "autor": autor or "Autor desconhecido",
@@ -127,7 +114,6 @@ def upload_book(titulo, autor, categoria, file, capa=None, capa_width=300, capa_
         }
         supabase.table("livros").insert(payload).execute()
         return True
-
     except Exception as e:
         st.error(f"Erro no upload: {e}")
         return False
@@ -287,25 +273,27 @@ st.markdown(
 # ==========================
 if user_email == ADMIN_EMAIL:
     st.subheader("⚙️ Painel de Administração")
-
-    # ---- Formulário de upload de livros ----
     with st.form("upload_form"):
         titulo = st.text_input("Título do Livro")
         autor = st.text_input("Autor")
         categoria = st.selectbox("Categoria", CATEGORIES)
         file = st.file_uploader("Upload do PDF", type=["pdf"])
         capa = st.file_uploader("Upload da Capa (opcional)", type=["png","jpg","jpeg"])
+        
+        # Novos campos: largura e altura
+        largura = st.number_input("📏 Largura da capa (px)", min_value=100, max_value=2000, value=400, step=10)
+        altura = st.number_input("📐 Altura da capa (px)", min_value=100, max_value=3000, value=600, step=10)
+        
         submitted = st.form_submit_button("Enviar")
         if submitted:
             if titulo and file:
-                if upload_book(titulo, autor, categoria, file, capa):
+                if upload_book(titulo, autor, categoria, file, capa, largura, altura):  # 👈 passa dimensões
                     st.success("📚 Livro adicionado com sucesso!")
                     st.session_state.offset = 0
                     st.rerun()
             else:
                 st.error("Preencha pelo menos o título e o PDF")
 
-    st.markdown("---")
     
    # ---- Exportação de tabela para DOCX ----
     st.subheader("📄 Exportar Credenciais de Acesso")
@@ -363,6 +351,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
