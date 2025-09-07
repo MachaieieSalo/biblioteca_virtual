@@ -77,6 +77,9 @@ def record_history(user_email, livro_id):
 
 
 
+from PIL import Image
+import io
+
 def upload_book(titulo, autor, categoria, file, capa=None, largura=400, altura=600):
     try:
         # PDF
@@ -95,7 +98,12 @@ def upload_book(titulo, autor, categoria, file, capa=None, largura=400, altura=6
             capa_path = f"capas/{safe_capa}"
 
             img = Image.open(capa)
-            img = img.resize((largura, altura), Image.Resampling.LANCZOS)  # 👈 usa dimensões escolhidas
+            img = img.resize((largura, altura), Image.Resampling.LANCZOS)
+
+            # 👇 garantir que está em RGB (evita erro com PNG RGBA)
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format="JPEG")
             capa_bytes = img_byte_arr.getvalue()
@@ -115,9 +123,11 @@ def upload_book(titulo, autor, categoria, file, capa=None, largura=400, altura=6
         }
         supabase.table("livros").insert(payload).execute()
         return True
+
     except Exception as e:
         st.error(f"Erro no upload: {e}")
         return False
+
 
 # ==========================
 # CONFIGURAÇÃO DA PÁGINA
@@ -352,6 +362,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
