@@ -4,6 +4,7 @@ from docx import Document
 import unicodedata
 import re
 import os
+import io
 from PIL import Image
 from io import BytesIO
 
@@ -351,6 +352,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
