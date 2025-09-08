@@ -234,6 +234,9 @@ if new_photo:
 # ==========================
 
 # Centralizar logo usando colunas
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
 
 
 # Pesquisa
@@ -363,6 +366,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
