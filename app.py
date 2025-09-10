@@ -233,20 +233,15 @@ if new_photo:
     st.sidebar.success("Foto atualizada!")
     st.stop()  # Interrompe execução para recarregar a sidebar com a nova imagem
 
-# ==========================
+
+# ============Carrossel========
 
 # Centralizar logo usando colunas
 col1, col2, col3 = st.columns([1, 2, 1])
 with col1:
     st.image("static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
 
-# ============Carrossel========
-
-import streamlit.components.v1 as components
-
-# ==========================
-
-# Carrossel Bootstrap (acima da pesquisa) com altura de 200px
+# Carrossel Bootstrap (acima da pesquisa) com altura de 200px e auto-slide
 carousel_code = """
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -258,7 +253,7 @@ carousel_code = """
 }
 </style>
 
-<div id="carouselExample" class="carousel slide mb-4" data-bs-ride="carousel">
+<div id="carouselExample" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="3000">
   <div class="carousel-inner">
     <div class="carousel-item active">
       <img src="https://picsum.photos/1200/300?random=1" class="d-block w-100 rounded" alt="Imagem 1">
@@ -281,7 +276,7 @@ carousel_code = """
 </div>
 """
 
-components.html(carousel_code, height=220)  # altura do componente Streamlit ligeiramente maior que a imagem
+components.html(carousel_code, height=220)
 
 
 #============= Carrossel =======
