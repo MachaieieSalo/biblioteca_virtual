@@ -8,6 +8,8 @@ import io
 from PIL import Image
 from io import BytesIO
 
+import streamlit.components.v1 as components
+
 # ==========================
 # CONFIGURAÇÕES DO SUPABASE
 # ==========================
@@ -237,6 +239,47 @@ if new_photo:
 col1, col2, col3 = st.columns([1, 2, 1])
 with col1:
     st.image("static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
+
+# ============Carrossel========
+
+
+# Centralizar logo usando colunas
+col1, col2, col3 = st.columns([1, 2, 1])
+with col1:
+    st.image("static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
+
+# Carrossel Bootstrap (acima da pesquisa)
+carousel_code = """
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<div id="carouselExample" class="carousel slide mb-4" data-bs-ride="carousel">
+  <div class="carousel-inner">
+    <div class="carousel-item active">
+      <img src="https://picsum.photos/1200/300?random=1" class="d-block w-100 rounded" alt="Imagem 1">
+    </div>
+    <div class="carousel-item">
+      <img src="https://picsum.photos/1200/300?random=2" class="d-block w-100 rounded" alt="Imagem 2">
+    </div>
+    <div class="carousel-item">
+      <img src="https://picsum.photos/1200/300?random=3" class="d-block w-100 rounded" alt="Imagem 3">
+    </div>
+  </div>
+  <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon"></span>
+    <span class="visually-hidden">Anterior</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+    <span class="carousel-control-next-icon"></span>
+    <span class="visually-hidden">Próximo</span>
+  </button>
+</div>
+"""
+
+components.html(carousel_code, height=350)
+
+
+#============= Carrossel =======
 
 
 # Pesquisa
