@@ -242,16 +242,21 @@ with col1:
 
 # ============Carrossel========
 
+import streamlit.components.v1 as components
 
-# Centralizar logo usando colunas
-col1, col2, col3 = st.columns([1, 2, 1])
-with col1:
-    st.image("static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
+# ==========================
 
-# Carrossel Bootstrap (acima da pesquisa)
+# Carrossel Bootstrap (acima da pesquisa) com altura de 200px
 carousel_code = """
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+.carousel-inner img {
+    height: 200px;
+    object-fit: cover;
+}
+</style>
 
 <div id="carouselExample" class="carousel slide mb-4" data-bs-ride="carousel">
   <div class="carousel-inner">
@@ -276,7 +281,7 @@ carousel_code = """
 </div>
 """
 
-components.html(carousel_code, height=350)
+components.html(carousel_code, height=220)  # altura do componente Streamlit ligeiramente maior que a imagem
 
 
 #============= Carrossel =======
