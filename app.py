@@ -271,7 +271,7 @@ if carousel_images:
 
     <style>
     .carousel-inner img {{
-        height: 200px;
+        height: 300px;
         object-fit: cover;
     }}
     </style>
@@ -291,7 +291,7 @@ if carousel_images:
     </div>
     """
 
-    components.html(carousel_code, height=220)
+    components.html(carousel_code, height=300)
 else:
     st.info("Nenhuma imagem encontrada no carrossel.")
 
@@ -427,6 +427,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
