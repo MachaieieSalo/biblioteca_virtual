@@ -235,12 +235,6 @@ if new_photo:
 
 
 # ============Carrossel========
-
-# Centralizar logo usando colunas
-col1, col2, col3 = st.columns([1, 2, 1])
-with col1:
-    st.image("static/image/logo.png", width=120, output_format="PNG", caption="")  # caminho relativo
-
 # Carrossel Bootstrap (acima da pesquisa) com altura de 200px e auto-slide
 carousel_code = """
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
@@ -409,6 +403,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
