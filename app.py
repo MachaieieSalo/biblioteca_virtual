@@ -235,42 +235,66 @@ if new_photo:
 
 
 # ============Carrossel========
-# Carrossel Bootstrap (acima da pesquisa) com altura de 200px e auto-slide
-carousel_code = """
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+# ============Carrossel========
+# Função para obter URLs públicas de todas as imagens do bucket carrossel
+def get_carousel_images():
+    try:
+        response = supabase.storage.from_("biblioteca").list(path="carrossel")
+        files = response if isinstance(response, list) else []
+        urls = []
+        for file in files:
+            if file.get("name").lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                public_url = supabase.storage.from_("biblioteca").get_public_url(f"carrossel/{file['name']}")
+                url = public_url.get("publicURL") if isinstance(public_url, dict) else str(public_url)
+                urls.append(url)
+        return urls
+    except Exception as e:
+        st.error(f"Erro ao obter imagens do carrossel: {e}")
+        return []
 
-<style>
-.carousel-inner img {
-    height: 200px;
-    object-fit: cover;
-}
-</style>
+carousel_images = get_carousel_images()
 
-<div id="carouselExample" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="3000">
-  <div class="carousel-inner">
-    <div class="carousel-item active">
-      <img src="https://github.com/MachaieieSalo/biblioteca_virtual/blob/main/static/image/image_1.jpg" class="d-block w-100 rounded" alt="Imagem 1">
-    </div>
-    <div class="carousel-item">
-      <img src="https://github.com/MachaieieSalo/biblioteca_virtual/blob/main/static/image/image_2.jpg" class="d-block w-100 rounded" alt="Imagem 2">
-    </div>
-    <div class="carousel-item">
-      <img src="https://github.com/MachaieieSalo/biblioteca_virtual/blob/main/static/image/image_3.jpg" class="d-block w-100 rounded" alt="Imagem 3">
-    </div>
-  </div>
-  <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon"></span>
-    <span class="visually-hidden">Anterior</span>
-  </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
-    <span class="carousel-control-next-icon"></span>
-    <span class="visually-hidden">Próximo</span>
-  </button>
-</div>
-"""
+# Gerar HTML do carrossel dinamicamente
+if carousel_images:
+    carousel_items = ""
+    for i, img_url in enumerate(carousel_images):
+        active_class = "active" if i == 0 else ""
+        carousel_items += f"""
+        <div class="carousel-item {active_class}">
+            <img src="{img_url}" class="d-block w-100 rounded" alt="Imagem {i+1}">
+        </div>
+        """
 
-components.html(carousel_code, height=220)
+    carousel_code = f"""
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+    .carousel-inner img {{
+        height: 200px;
+        object-fit: cover;
+    }}
+    </style>
+
+    <div id="carouselExample" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="3000">
+      <div class="carousel-inner">
+        {carousel_items}
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+        <span class="visually-hidden">Anterior</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+        <span class="visually-hidden">Próximo</span>
+      </button>
+    </div>
+    """
+
+    components.html(carousel_code, height=220)
+else:
+    st.info("Nenhuma imagem encontrada no carrossel.")
+
 
 
 #============= Carrossel =======
@@ -403,6 +427,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
