@@ -184,7 +184,7 @@ if not st.session_state.user:
     st.markdown(
         """
         <div style="text-align: center; margin-top: 40px; color: #888; font-size: 0.9em;">
-            © 2025 Biblioteca Virtual | Fortaleza Digital, E.I | Desenvolvedor: Salomão Machaieie. Todos os direitos reservados.
+            © 2025 Sistema Bibliotecario Virtual - SBVISP  | Fortaleza Digital, E.I | Desenvolvedor: Salomão Machaieie. Todos os direitos reservados.
         </div>
         """,
         unsafe_allow_html=True
@@ -335,7 +335,7 @@ else:
 st.markdown(
         """
         <div style="text-align: center; margin-top: 40px; color: #888; font-size: 0.9em;">
-            © 2025 Biblioteca Virtual | Fortaleza Digital, E.I | Desenvolvedor: Salomão Machaieie. Todos os direitos reservados.
+            © 2025 Sistema Bibliotecario Virtual - SBVISP | Fortaleza Digital, E.I | Desenvolvedor: Salomão Machaieie. Todos os direitos reservados.
         </div>
         """,
         unsafe_allow_html=True
@@ -426,6 +426,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
