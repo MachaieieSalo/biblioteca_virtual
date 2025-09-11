@@ -164,8 +164,8 @@ if "offset" not in st.session_state:
 if not st.session_state.user:
     # Centralizar logo usando colunas
     col1, col2, col3 = st.columns([1, 2, 1])
-    with col1:
-        st.image("static/image/logo_capa.png", width=2550, output_format="PNG", caption="")  # caminho relativo
+    with col2:
+        st.image("static/image/logo_capa.png", width=500, output_format="PNG", caption="")  # caminho relativo
     st.title("📚 Biblioteca Virtual | Instituto Politécnico Sumayya")
     st.text("Seja bem-vindo ao nosso Sistema Bibliotecario! Por favor, faça login para continuar.")
     
@@ -427,6 +427,7 @@ if user_email == ADMIN_EMAIL:
 
         except Exception as e:
             st.error(f"Ocorreu um erro ao gerar DOCX: {e}")
+
 
 
 
